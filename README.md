@@ -30,12 +30,7 @@
 
 2. Запустить Postgres через докер и передать в него секретные константы: 
 ```
-sudo docker run --name django_db \
--e POSTGRES_PASSWORD= \
--e POSTGRES_DB= \
--e POSTGRES_USER= \
--p 5432:5432 \
--d postgres
+sudo docker run --name django_db -e POSTGRES_PASSWORD= -e POSTGRES_DB= -e POSTGRES_USER= -p 5432:5432 -d postgres
 ```
 
 * Простой 
