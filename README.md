@@ -19,7 +19,7 @@
 
 ### Запуск Postgres и передача констант в setings.py:
 
-1. Создать файл `.env` и заисать в него:
+1. Создать файл `.env` в директории `/todo_list/todolist` и записать в него:
     - `SECRET_KEY=`
     - `DEBUG=`
     - `POSTGRES_DB=` Имя db
@@ -33,7 +33,10 @@
 sudo docker run --name django_db -e POSTGRES_PASSWORD= -e POSTGRES_DB= -e POSTGRES_USER= -p 5432:5432 -d postgres
 ```
 
-* Простой 
+
+* Простой способ запуска Postgres и записи констант:
+
+    - Разрешить выполнять скрипт `sudo chmod +x ./easy_env` и запустить скрипт `./easy_env`- этот скрипт спросит константы описанние выше, запишет их в `/todolist/.env` и запустит postgres с переданными константами.
 
 
 

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [ -e /todolist/.env ]
+then
+    echo "У Вас уже есть такой файл"
+else
+    read -p "Введите какой будет SECRET_KEY" key
+    read -p "Введите значение DEBUG (Для разработки лучше True)" deb
+    read -p "Введите название POSTGRES_DB" pdb
+    read -p "Введите имя пользователя POSTGRES_USER" pus 
+    read -p "Введите пароль для бд POSTGRES_PASSWORD" ppa
+    read -p "Название Докер образа postgres" pdoc
+
+    echo -e "SECRET_KEY=$key\nDEBUG=$deb\nPOSTGRES_DB=$pdb\nPOSTGRES_USER=$pus\nPOSTGRES_PASSWORD=$ppa">>/todolist/.env
+
+    sudo docker run --name $pdoc -e POSTGRES_PASSWORD=$ppa -e POSTGRES_DB=$pdb -e POSTGRES_USER=$pus -p 5432:5432 -d postgres
+    if [ $? -ne 0]
+    then
+        echo "Что-то не то с созданием"
+    else
+        docker_ip=$(sudo docker inspect $pdoc | grep -E -o -m 1 "[0-9]{3}[\.][0-9]{2}[\.][0-9]{1}[\.]1")
+        echo -e "POSTGRES_HOST=$docker_ip">>/todolist/.env
+    fi
+
+fi
