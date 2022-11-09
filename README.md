@@ -36,7 +36,16 @@ sudo docker run --name django_db -e POSTGRES_PASSWORD= -e POSTGRES_DB= -e POSTGR
 
 * Простой способ запуска Postgres и записи констант:
 
-    - Разрешить выполнять скрипт `sudo chmod +x ./easy_env` и запустить скрипт `./easy_env`- этот скрипт спросит константы описанние выше, запишет их в `/todolist/.env` и запустит postgres с переданными константами.
+    - Разрешить выполнять скрипт `sudo chmod +x ./easy_env` 
+    - Запустить скрипт `./easy_env`- этот скрипт спросит константы описанние выше, запишет их в `todolist/.env` и запустит докер postgres с переданными константами.
+
+
+### Запустить проэкт на этом этапе:
+
+1. Войти в папку `cd todolist`
+2. Все миграции созданы, осталось их записать в postgres `./manage.py migrate`
+3. Запустить сервер `./manage.py runserver`
+
 
 
 
