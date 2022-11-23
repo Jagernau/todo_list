@@ -29,8 +29,8 @@ jobs:
       - name: render docker-compose and .env
 
         run: | 
-          cat todolist/docker-compose-ci.yaml | envsubst > docker-compose.yaml
-          cat todolist/.env | envsubst > .env
+          cat todolist/docker-compose-ci.yaml | envsubst > todo_list/docker-compose.yaml
+          cat todolist/.env | envsubst > todo_list/.env
       - name: copy files to server
         uses: appleboy/scp-action@master
         with:
