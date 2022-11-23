@@ -46,6 +46,10 @@ sudo docker run --name django_db -e POSTGRES_PASSWORD= -e POSTGRES_DB= -e POSTGR
 2. Все миграции созданы, осталось их записать в postgres `./manage.py migrate`
 3. Запустить сервер `./manage.py runserver`
 
+### Запуск докера
+
+В папке `todolost` запустить команду `sudo docker-compose up`
+
 ###CI/CD
 
 
