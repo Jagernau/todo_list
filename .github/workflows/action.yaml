@@ -38,7 +38,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          source: "deploy/docker-compose.yaml,deploy/.env"
+          source: "docker-compose.yaml,.env"
           target: todolist
           strip_components: 1
       - name: deploy app
@@ -49,4 +49,4 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
             cd todolist
-            echo ${{ secrets.SERVER_PASSWORD }} | sudo  docker-compose up
+            echo ${{ secrets.SERVER_PASSWORD }} | docker-compose up
