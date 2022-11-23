@@ -29,7 +29,7 @@ services:
       
   migrations:
 
-   image: jagernau/todo:$GITHUB_REF_NAME-$GITHUB_RUN_ID todolist/
+   image: jagernau/todo:${GITHUB_REF_NAME}-${GITHUB_RUN_ID}
    env_file:
      - ./.env
    environment:
@@ -44,13 +44,13 @@ services:
   
   api:
 
-    image: jagernau/todo:$GITHUB_REF_NAME-$GITHUB_RUN_ID
+    image: jagernau/todo:${GITHUB_REF_NAME}-${GITHUB_RUN_ID}
     restart: always
     depends_on:
       postgres:
         condition: service_healthy
     env_file:
-      - ./.env
+      - .env
     environment:
       POSTGRES_HOST: postgres
       SECRET_KEY: ${SECRET_KEY}
