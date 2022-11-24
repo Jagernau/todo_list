@@ -53,6 +53,5 @@ sudo docker run --name django_db -e POSTGRES_PASSWORD= -e POSTGRES_DB= -e POSTGR
 ###CI/CD
 
 
-Здесь всё автоматически.
-
+Здесь всё автоматически. Запускается через action.yaml
 
