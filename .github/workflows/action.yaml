@@ -50,6 +50,4 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
             cd todolist
-            docker-compose pull
-            docker-compose up -d
-            docker system prune -a -f
+            echo ${{ secrets.SERVER_PASSWORD }} | sudo docker-compose up -d
