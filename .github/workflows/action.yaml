@@ -49,4 +49,4 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
             cd todolist
-            echo ${{ secrets.SERVER_PASSWORD }} | docker-compose up
+            sudo docker-compose up
