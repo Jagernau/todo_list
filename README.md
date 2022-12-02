@@ -10,8 +10,6 @@
 1. Скачать проэкт: `git clone https://github.com/Jagernau/todo_list`
 2. Зайти в папку `cd todo_list`
 
-
-
 ### Установка виртуальной среды для проэкта:
 
 1. Создать песочницу: `python3 -m virtualenv env`
