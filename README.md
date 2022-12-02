@@ -2,6 +2,7 @@
 
 стек (python3.9, Django, Postgres)
 
+
 ### Скачать:
 
 1. Скачать проэкт: `git clone https://github.com/Jagernau/todo_list`
