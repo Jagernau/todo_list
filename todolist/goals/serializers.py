@@ -20,7 +20,9 @@ class CategoryCreateSerializer(CategorySerializer,ValidationMixin):
 
 #Цель
 class GoalSerializer(serializers.ModelSerializer):
-    user = ProfileSerializer(read_only=True)
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=GoalCategory.objects.filter(is_deleted=False)
+    )
 
     class Meta:
         model = Goal
