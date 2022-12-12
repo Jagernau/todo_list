@@ -51,7 +51,7 @@ sudo docker run --name django_db -e POSTGRES_PASSWORD= -e POSTGRES_DB= -e POSTGR
 
 В папке `todolost` запустить команду `sudo docker-compose up`
 
-###CI/CD
+### CI/CD
 
 
 Здесь всё автоматически. Запускается через action.yaml
