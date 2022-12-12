@@ -73,7 +73,7 @@ services:
 
 
   front:
-    image: sermalenk/skypro-front:lesson-38
+    image: sermalenk/skypro-front:lesson-37
     restart: always
     depends_on:
       - api
