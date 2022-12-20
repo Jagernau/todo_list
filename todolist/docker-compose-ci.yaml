@@ -41,7 +41,7 @@ services:
      POSTGRES_DB: ${POSTGRES_DB}
      VK_OAUTH2_KEY: ${VK_OAUTH2_KEY}
      VK_OAUTH2_SECRET: ${VK_OAUTH2_SECRET}
-     BOT_TOKEN: ${BOT_TOKEN}
+     BOT_TOKEN: "${BOT_TOKEN}"
 
    depends_on:
      postgres:
@@ -61,12 +61,12 @@ services:
       POSTGRES_HOST: postgres
       SECRET_KEY: ${SECRET_KEY}
       POSTGRES_USER: ${POSTGRES_USER}
-      DEBUG: ${DEBUG}
+      DEBUG: "${DEBUG}"
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
       VK_OAUTH2_KEY: ${VK_OAUTH2_KEY}
       VK_OAUTH2_SECRET: ${VK_OAUTH2_SECRET}
-      BOT_TOKEN: ${BOT_TOKEN}
+      BOT_TOKEN: "${BOT_TOKEN}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -93,7 +93,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       VK_OAUTH2_KEY: ${VK_OAUTH2_KEY}
       VK_OAUTH2_SECRET: ${VK_OAUTH2_SECRET}
-      BOT_TOKEN: ${BOT_TOKEN}
+      BOT_TOKEN: "${BOT_TOKEN}"
     command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
