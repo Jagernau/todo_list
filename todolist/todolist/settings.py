@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "social_django",
     "goals",
     "django_filters",
+    "bot"
 
 ]
 
@@ -172,3 +173,5 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
+
+BOT_TOKEN = env('BOT_TOKEN')

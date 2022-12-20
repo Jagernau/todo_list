@@ -41,6 +41,7 @@ services:
      POSTGRES_DB: ${POSTGRES_DB}
      VK_OAUTH2_KEY: ${VK_OAUTH2_KEY}
      VK_OAUTH2_SECRET: ${VK_OAUTH2_SECRET}
+     BOT_TOKEN: ${BOT_TOKEN}
 
    depends_on:
      postgres:
@@ -50,7 +51,30 @@ services:
 
    networks:
      - django 
-  
+
+  bot:
+    image: jagernau/todo:${GITHUB_REF_NAME}-${GITHUB_RUN_ID}
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_HOST: postgres
+      SECRET_KEY: ${SECRET_KEY}
+      POSTGRES_USER: ${POSTGRES_USER}
+      DEBUG: ${DEBUG}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      VK_OAUTH2_KEY: ${VK_OAUTH2_KEY}
+      VK_OAUTH2_SECRET: ${VK_OAUTH2_SECRET}
+      BOT_TOKEN: ${BOT_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: python manage.py runbot
+    networks:
+      - django 
+
+
   api:
 
     image: jagernau/todo:${GITHUB_REF_NAME}-${GITHUB_RUN_ID}
@@ -69,6 +93,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       VK_OAUTH2_KEY: ${VK_OAUTH2_KEY}
       VK_OAUTH2_SECRET: ${VK_OAUTH2_SECRET}
+      BOT_TOKEN: ${BOT_TOKEN}
     command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
