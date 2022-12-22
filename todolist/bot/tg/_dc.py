@@ -1,30 +1,34 @@
 from dataclasses import field
-from typing import List, Optional
+from typing import List, Optional, ClassVar, Type, List
 
 from marshmallow_dataclass import dataclass
 from marshmallow import EXCLUDE
-
+import marshmallow_dataclass
 
 @dataclass
 class MessageFrom:
     """Telegram API: https://core.telegram.org/bots/api#user"""
     id: int
-    first_name: Optional[str] = field(default=None)
-    last_name: Optional[str] = field(default=None)
-    username: Optional[str] = field(default=None)
+    is_bot: bool
+    first_name: str | None
+    last_name: str | None
+    username: str
 
+    
     class Meta:
         unknown = EXCLUDE
+
 
 @dataclass
 class Chat:
     """Telegram API: https://core.telegram.org/bots/api#chat"""
+    
     id: int
+    first_name: str | None
+    username: str | None
+    last_name: str | None
     type: str
-    first_name: Optional[str] = field(default=None)
-    last_name: Optional[str] = field(default=None)
-    username: Optional[str] = field(default=None)
-    title: Optional[str] = field(default=None)
+    title: str | None
 
     class Meta:
         unknown = EXCLUDE
@@ -33,11 +37,12 @@ class Chat:
 @dataclass
 class Message:
     """Telegram API: https://core.telegram.org/bots/api#message"""
+
     message_id: int
+    from_: MessageFrom = field(metadata={'data_key': 'from'})
     chat: Chat
-    # override usage of keyword "from" - add underscore and metadata to map to data key
-    from_: Optional[MessageFrom] = field(metadata=dict(data_key='from'), default=None)
-    text: Optional[str] = field(default=None)
+    date: int
+    text: str | None
 
     class Meta:
         unknown = EXCLUDE
@@ -47,7 +52,8 @@ class Message:
 class UpdateObj:
     """Telegram API: https://core.telegram.org/bots/api#getting-updates"""
     update_id: int
-    message: Optional[Message] = field(default=None)
+    message: Message
+
 
     class Meta:
         unknown = EXCLUDE
@@ -58,17 +64,18 @@ class GetUpdatesResponse:
     """https://core.telegram.org/bots/api#getupdates"""
     ok: bool
     result: List[UpdateObj]
-    
     class Meta:
         unknown = EXCLUDE
-
+    
 
 @dataclass
 class SendMessageResponse:
     """https://core.telegram.org/bots/api#sendmessage"""
     ok: bool
     result: Message
-
     class Meta:
         unknown = EXCLUDE
 
+
+GET_UPDETES_SCHEMA = marshmallow_dataclass.class_schema(GetUpdatesResponse)()
+SEND_MESSAGE_RESPONSE_SCHEMA = marshmallow_dataclass.class_schema(SendMessageResponse)()

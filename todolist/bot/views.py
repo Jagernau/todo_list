@@ -1,26 +1,31 @@
-from rest_framework import generics, permissions
+from rest_framework import permissions, status
+from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
-from bot.models import TgUser
-from bot.serializers import TgUserSerializer
-from bot.tg.client import TgClient
-from todolist import settings
+from .models import TgUser
+from .serializers import TgUserUpdateSerializer
 
 
-
-class VerificationView(generics.GenericAPIView):
+class TgUserUpdateView(GenericAPIView):
     model = TgUser
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = TgUserSerializer
+    serializer_class = TgUserUpdateSerializer
+    queryset = TgUser.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        instance = TgUser.objects.filter(
+            verification_code=request.data.get('verification_code')
+        ).first()
+        if not instance:
+            return Response(
+                data={'verification_code': ['Invalid code']}, status=status.HTTP_400_BAD_REQUEST
+            )
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        instance.user = request.user
+        instance.save()
+
+        return Response(serializer.data)
 
     def patch(self, request, *args, **kwargs):
-        s:TgUserSerializer = self.get_serializer(data=request.data)
-        s.is_valid(raise_exception=True)
-
-        tg_user: TgUser = s.validated_data["tg_user"]
-        tg_user.user = self.request.user
-        tg_user.save(update_fields=("user",))
-
-        instance_s: TgUserSerializer = self.get_serializer(tg_user)
-        TgClient(settings.BOT_TOKEN).send_message(tg_user.chat_id, "[verification_has_been_completed]")
-        return Response(instance_s.data)
+        return self.update(request, *args, **kwargs)

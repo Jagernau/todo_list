@@ -1,148 +1,171 @@
-import logging
-import os
-from enum import IntEnum, auto
+from random import randint
+
 from django.core.management import BaseCommand
-from bot.models import TgUser
-from bot.tg.client import TgClient
-from bot.tg.models import Message
-from pydantic import BaseModel
-from todolist import settings
-from bot.tg.fsm.memory_storage import MemoryStorage
+from bot.tg._dc import SendMessageResponse
+
+from todolist.settings import BOT_TOKEN
 from goals.models import Goal, GoalCategory, BoardParticipant
+from bot.models import TgUser
+from bot.tg import TgClient
 
-logger = logging.getLogger(__name__)
-
-class NewGoal(BaseModel):
-    cat_id: int | None
-    goal_title: str | None = None
-
-    @property
-    def is_completed(self) -> bool:
-        return None not in [self.cat_id, self.goal_title]
-
-
-class StateEnum(IntEnum):
-    CREATE_CATEGORY_SELECT = auto()
-    CHOSEN_CATEGORY = auto()
 
 
 class Command(BaseCommand):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.tg_client = TgClient(settings.BOT_TOKEN)
-        self.storage = MemoryStorage()
+    help = 'Start telegram bot'
 
-    @staticmethod
-    def _generate_verification_code() -> str:
-        return os.urandom(12).hex()
+    def __init__(self):
+        self.offset = 0
+        self.tg_client = TgClient(BOT_TOKEN)
+        self.response: SendMessageResponse
+        self.chat_id: int
+        self.tg_user_id: int
+        self.message: str
+        self.message_id: int = 0
 
-    def handle_unverified_user(self, msg: Message, tg_user: TgUser):
-        code: str = self._generate_verification_code()
-        tg_user.verification_code = code
-        tg_user.save(update_fields=("verification_code",))
-        self.tg_client.send_message(
-            chat_id=msg.chat.id,
-            text=f"[verification_code] {tg_user.verification_code}"
-        )
+        self.user: TgUser = None
+        self.tg_user: TgUser
+        self.category: GoalCategory
+        self.goal: Goal
 
-    def handle_goals_list(self, msg: Message, tg_user: TgUser):
-        goals = Goal.objects.filter(
-            category__board__participants__user_id=tg_user.user_id,
-            category__is_deleted=False
-        ).only("id", "title")
-        result = [f"#{goal.id} {goal.title}" for goal in goals]
-        if result:
-            self.tg_client.send_message(msg.chat.id, "\n".join(result))
-        else:
-            self.tg_client.send_message(msg.chat.id, "[you have no goals!]")
-
-
-    def handle_goal_categories_list(self, msg: Message, tg_user: TgUser):
-        resp_categories: list[str] = [
-            f"#{cat.id} {cat.title}"
-            for cat in GoalCategory.objects.filter(
-                board__participants__user_id=tg_user.user_id,
-                is_deleted=False
-            )
-        ]
-        if resp_categories:
-            self.tg_client.send_message(msg.chat.id, "Select category\n" + "\n".join(resp_categories))
-        else:
-            self.tg_client.send_message(msg.chat.id, "[you have no categories]")
-
-    def handle_save_selected_category(self, msg: Message, tg_user: TgUser):
-        if msg.text.isdigit():
-            cat_id = int(msg.text)
-            if GoalCategory.objects.filter(
-                    board__participants__user_id=tg_user.user_id,
-                    board__participants__role__in=[BoardParticipant.Role.owner, BoardParticipant.Role.writer],
-                    is_deleted=False,
-                    id=cat_id
-            ).exists():
-                self.storage.update_data(chat_id=msg.chat.id, cat_id=cat_id)
-                self.tg_client.send_message(msg.chat.id, "[set title]")
-                self.storage.set_state(msg.chat.id, state=StateEnum.CHOSEN_CATEGORY)
-            else:
-                self.tg_client.send_message(msg.chat.id, "[category not found]")
-        else:
-            self.tg_client.send_message(msg.chat.id, "[invalid category id]")
-
-    def handle_save_new_cat(self, msg: Message, tg_user: TgUser):
-        goal = NewGoal(**self.storage.get_data(tg_user.chat_id))
-        goal.goal_title = msg.text
-        if goal.is_completed:
-            Goal.objects.create(
-                title=goal.goal_title,
-                category_id=goal.cat_id,
-                user_id=tg_user.user_id,
-
-            )
-            self.tg_client.send_message(msg.chat.id, "[New goal created]")
-        else:
-            self.tg_client.send_message(msg.chat.id, "[something went wrong]")
-
-        self.storage.reset(tg_user.chat_id)
-
-    def handle_verified_user(self, msg: Message, tg_user: TgUser):
-        if msg.text == "/goals":
-            self.handle_goals_list(msg, tg_user)
-        elif msg.text == "/create":
-            self.handle_goal_categories_list(msg, tg_user)
-            self.storage.set_state(msg.chat.id, state=StateEnum.CREATE_CATEGORY_SELECT)
-            self.storage.set_data(msg.chat.id, data=NewGoal().dict())
-
-        elif msg.text == "/cancel" and self.storage.get_state(tg_user.chat_id):
-            self.storage.reset(tg_user.chat_id)
-            self.tg_client.send_message(msg.chat.id, "[canceled]")
-
-        elif state := self.storage.get_state(tg_user.chat_id):
-            match state:
-                case StateEnum.CREATE_CATEGORY_SELECT:
-                    self.handle_save_selected_category(msg, tg_user)
-                case StateEnum.CHOSEN_CATEGORY:
-                    self.handle_save_new_cat(msg, tg_user)
-                case _:
-                    logger.warning("Invalid state %s", state)
-
-        elif msg.text.startswith("/"):
-            self.tg_client.send_message(msg.chat.id, "[unknown command]")
-
-    def handle_message(self, msg: Message):
-        tg_user, _ = TgUser.objects.select_related("user").get_or_create(
-            chat_id=msg.chat.id,
-            defaults={
-                "username": msg.from_.username
-            }
-        )
-        if tg_user.user:
-            self.handle_verified_user(msg=msg, tg_user=tg_user)
-        else:
-            self.handle_unverified_user(msg=msg, tg_user=tg_user)
+        self.reply_required: bool = False
+        self.category_mode: bool = False
+        self.goal_mode: bool = False
+        super().__init__()
 
     def handle(self, *args, **options):
-        offset = 0
         while True:
-            res = self.tg_client.get_updates(offset=offset)
-            for item in res.result:
-                offset = item.update_id + 1
-                self.handle_message(msg=item.message)
+            self._get_response()
+
+            if self.reply_required:
+                if self.user:
+                    reply = self._main_logic()
+                else:
+                    reply = self._verify()
+
+                self._send_reply(reply=reply)
+                self.reply_required = False
+
+
+    def _get_response(self) -> None:
+        """Get key data from response"""
+        # get key data from response
+        self.response = self.tg_client.get_updates(offset=self.offset)
+
+        for item in self.response.result:
+            self.offset = item.update_id + 1
+            self.chat_id = item.message.chat.id
+            self.tg_user_id = item.message.from_.id
+            self.message = item.message.text
+
+            self.user = TgUser.objects.filter(
+                tg_user_id=self.tg_user_id, user_id__isnull=False
+            ).first()
+
+            # check if message is new
+            if not self.message_id == item.message.message_id:
+                self.reply_required = True
+
+            self.message_id = item.message.message_id
+
+    def _main_logic(self) -> str:
+        """Logic for verified user"""
+        # logic for goal creation - choose category, create goal
+        if self.message == '/cancel':
+            self.category_mode = False
+            self.goal_mode = False
+            reply = f'Операция прервана, введите команду'
+        elif self.category_mode:
+            reply = self._choose_category()
+        elif self.goal_mode:
+            reply = self._create_goal()
+
+        # key commands
+        elif self.message == '/goals':
+            reply = self._goals()
+        elif self.message == '/create':
+            reply = self._create()
+
+        else:
+            reply = 'Неизвестная команда'
+
+        return reply
+
+    def _verify(self) -> str:
+        """Starting logic"""
+        verification_code = randint(10000, 99999)
+
+        self.tg_user = TgUser.objects.filter(tg_user_id=self.tg_user_id).first()
+        if not self.tg_user:
+            TgUser.objects.create(
+                tg_user_id=self.tg_user_id,
+                tg_chat_id=self.chat_id,
+                verification_code=verification_code
+            )
+        else:
+            self.tg_user.verification_code = verification_code
+            self.tg_user.save()
+
+        reply = (f"Подтвердите, пожалуйста, свой аккаунт. "
+                 f"Для подтверждения необходимо ввести код: {verification_code} "
+                 f"на сайте")
+        return reply
+
+    def _goals(self) -> list:
+        """Logic for /goals command - choose category"""
+        goals = Goal.objects.filter(
+            category__board__participants__user=self.user.user, is_deleted=False
+        ).only('id', 'title')
+        prefix = ['Cписок ваших целей:']
+        reply = [f'#{goal.id} {goal.title}' for goal in goals]
+        return prefix + reply
+
+    def _create(self) -> list:
+        """Logic for /create command - list of categories"""
+        categories = GoalCategory.objects.filter(
+            board__participants__user=self.user.user,
+            board__participants__role__in=[BoardParticipant.Role.owner, BoardParticipant.Role.writer],
+            is_deleted=False
+        ).only('id', 'title')
+        self.category_mode = True
+        prefix = ['Введите номер категории из списка доступных:']
+        reply = [f'#{category.id} {category.title}' for category in categories]
+        return prefix + reply
+
+    def _choose_category(self) -> str:
+        """Logic for /create command - choose category"""
+
+        if not self.message.isnumeric():
+            return f'Выбрана неверная категория'
+
+        self.category = GoalCategory.objects.filter(
+            pk=self.message,
+            board__participants__user=self.user.user,
+            board__participants__role__in=[BoardParticipant.Role.owner, BoardParticipant.Role.writer],
+            is_deleted=False
+        ).first()
+
+        if not self.category:
+            reply = f'Выбрана неверная категория'
+        else:
+            reply = (f'Выбрана категория {self.category.title}. '
+                     f'Введите цель')
+            self.goal_mode = True
+            self.category_mode = False
+
+        return reply
+
+    def _create_goal(self) -> str:
+        """Logic for /create command - create goal"""
+        self.goal = Goal.objects.create(
+            user=self.user.user, title=self.message, category=self.category
+        )
+        self.goal_mode = False
+        return f'Цель "{self.goal.title}" создана'
+
+    def _send_reply(self, reply: str | list) -> None:
+        """Send reply"""
+        if isinstance(reply, list):
+            for item in reply:
+                self.tg_client.send_message(chat_id=self.chat_id, text=item)
+        else:
+            self.tg_client.send_message(chat_id=self.chat_id, text=reply)

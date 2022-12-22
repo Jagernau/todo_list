@@ -1,6 +1,7 @@
 import requests
 
-from bot.tg.models import GetUpdatesResponse, SendMessageResponse
+from bot.tg import _dc
+
 
 class TgClient:
     def __init__(self, token):
@@ -9,34 +10,17 @@ class TgClient:
     def get_url(self, method: str):
         return f'https://api.telegram.org/bot{self.token}/{method}'
 
-    def get_updates(self, offset: int = 0, timeout: int = 60) -> GetUpdatesResponse:
+    def get_updates(self, offset: int = 0, timeout: int = 60) -> _dc.GetUpdatesResponse:
         url = self.get_url('getUpdates')
 
-        params = {
-            "offset": offset,
-            "timeout": timeout
-        }
-        headers = {
-            "accept": "application/json",
-            "User-Agent": "Django application",
-            "content-type": "application/json"
-        }
-        response = requests.get(url=url, headers=headers, params=params)
+        response = requests.get(url, params={"offset": offset, "timeout": timeout})
 
-        return GetUpdatesResponse.Schema().load(response.json())
+        return _dc.GET_UPDETES_SCHEMA.load(response.json())
 
-    def send_message(self, chat_id: int, text: str) -> SendMessageResponse:
+    def send_message(self, chat_id: int, text: str) -> _dc.SendMessageResponse:
         url = self.get_url('sendMessage')
 
-        payload = {
-            "text": text,
-            "chat_id": chat_id
-        }
-        headers = {
-            "accept": "application/json",
-            "User-Agent": "Django application",
-            "content-type": "application/json"
-        }
-        response = requests.post(url=url, headers=headers, json=payload)
+        
+        response = requests.post(url, params={"chat_id": chat_id, "text": text})
 
-        return SendMessageResponse.Schema().load(response.json())
+        return _dc.SEND_MESSAGE_RESPONSE_SCHEMA.load(response.json())

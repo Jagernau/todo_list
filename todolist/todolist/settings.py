@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "core",
     "rest_framework",
-    "corsheaders",
+#    "corsheaders",
     "social_django",
     "goals",
     "django_filters",
@@ -66,7 +66,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
+#    "corsheaders.middleware.CorsMiddleware",
     'social_django.middleware.SocialAuthExceptionMiddleware'
 
 ]
