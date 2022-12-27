@@ -26,17 +26,13 @@
 
 2. И всё запустить командой `sudo docker-compose up --build`
 
-# Вариант вручную (это на случай если нет docker-compose
+# Вариант вручную (это на случай если нет docker-compose).
 ### Установка виртуальной среды для проэкта:
-
-
 
 1. Создать песочницу: `python3 -m virtualenv env`
 2. Войти в виртуальную среду: `source env/bin/activate`
 3. Обновить "pip" виртуальной среды: `pip install --upgrade pip`
 4. Установить библиотеки проэкта: `pip install -r requirements.txt`
-
-
 
 ### Запуск Postgres и передача констант в setings.py:
 
@@ -55,7 +51,6 @@
 sudo docker run --name django_db -e POSTGRES_PASSWORD= -e POSTGRES_DB= -e POSTGRES_USER= -p 5432:5432 -d postgres
 ```
 
-
 * Простой способ запуска Postgres и записи констант:
 
     - Разрешить выполнять скрипт `sudo chmod +x ./easy_env` 
@@ -65,12 +60,3 @@ sudo docker run --name django_db -e POSTGRES_PASSWORD= -e POSTGRES_DB= -e POSTGR
     - Запустить Бэкэнд `./manage.py runserver`.
     - С Фронтом запустить на 8000 порту, фронт доекр: sermalenk/skypro-front:lesson-38 на 80 порт.
     - Запустить бота Тг `./manage.py runbot`
-
-
-
-
-
-
-
-
-
